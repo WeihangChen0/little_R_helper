@@ -2,10 +2,10 @@
 x <- c("CAACAACTCCAGTACA-1_2_2","TATCCTAGTAATACCC-1_2_1","GACAGCCCACTAAACC-1_2_1")
 x <- c("wt_CAACAACTCCAGTACA-1", "mut_TATCCTAGTAATACCC-1")
 
-#* The goal of this function is remove redundant prefix or suffix added to  
+#* The goal of this function is to remove redundant prefix or suffix added to  
 #* single cell barcodes in a given list of barocdes. These barcodes were likely
 #* reformatted by Seurat merge function that either add project_id as 
-#* prefix("projectID_") or add suffix as "_{1-9}+" to barcode. 
+#* prefix("projectID_") or add numbers as suffix("_{1-9}+") to barcode. 
 
 #* This function requires a list of barocdes with 16 bp nucleotide. Special
 #* characters that separate prefix and suffix from the 16 bp. It will return 
