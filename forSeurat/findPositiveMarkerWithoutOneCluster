@@ -1,0 +1,64 @@
+library(Seurat)
+library(tidyverse)
+library(foreach)
+library(doParallel)
+#* The goal of this function is to screen for marker genes 
+#* for a certain cluster that is small or very similar to 
+#* another cluster in the dataset. It calculates gene
+#* statistics by iternatively remove one cluster from the 
+#* cell pool.
+findPositiveMarkerWithoutOneCluster <- function(seuratObj, cluster1,
+                                                n_cores=1, test.use = "negbinom"){
+  #####################################################################
+  #* Negative binomial was used as it most likely to pick up  
+  #* small signals over zeros. 
+  default_Marker <- FindMarkers(seuratObj,
+                                ident.1 = cluster1,test.use = test.use)
+  #####################################################################
+  # load package for multiprocessing
+  require(foreach)
+  require(doParallel)
+  registerDoParallel(n_cores)
+  
+  # get all clusters that are not the target cluster
+  other_clusters <- sort(setdiff(unique(seuratObj$celltype), cluster1))
+  
+  # iterate over all cells that do not contain a certain cluster
+  markerMultipleList <- foreach(cl=other_clusters, .combine=rbind)%dopar%{
+    # in case one run break the whole foreach loop
+    marker_no_cl <- NULL
+    
+    try({
+      # call FindMarkers under wilcox mode 
+      marker_no_cl <- FindMarkers(seuratObj[,!seuratObj$celltype%in%c(cl)],
+                                  ident.1 = cluster1,test.use = "negbinom")
+      
+      # add gene name and cluster removed from calculation 
+      marker_no_cl$gene <- row.names(marker_no_cl)
+      marker_no_cl$no_cluster <- cl
+      
+      # return dataframe
+      return(marker_no_cl)
+    })
+    
+  }
+  return(markerMultipleList)
+  stopImplicitCluster() 
+  #####################################################################
+  
+  # select records that were affected most by cluster exclusion 
+  marker_from_smaller_dataset <- markerMultipleList %>% 
+    group_by(gene)%>% 
+    arrange(p_val_adj)%>% 
+    filter(row_number()==1)
+  
+  
+  # return positive gene list not under default mode
+  g0 <- default_Marker[default_Marker$p_val_adj<0.05,]$gene
+  g1 <- marker_from_smaller_dataset[marker_from_smaller_dataset$p_val_adj<0.05,]$gene
+  
+  return(marker_from_smaller_dataset%>% filter(avg_log2FC>(0))%>%
+         filter(gene%in%setdiff(g1,g0))%>%
+         arrange(p_val_adj))
+  
+}
