@@ -26,7 +26,7 @@ DEGcallingPerCluster<-function(seuratObj,
   clusters <- mixedsort(unique(Idents(seuratObj)))
   
   # get all groups 
-  groups <- unique(seuratObj$sample)
+  groups <- unique(seuratObj@meta.data[,group_name])
   no_wt_groups <- setdiff(groups, control_group)
   
   # split the job for one group over control group
