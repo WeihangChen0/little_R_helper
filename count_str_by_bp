@@ -1,0 +1,16 @@
+
+# count frequency of A/T/C/G for a list of sequence by position
+# best suited for aligned sequences/barcodes
+
+
+count_str_by_bp <- function(x){
+  output <- matrix(0, nrow=nchar(x[1]), ncol=4) %>% data.frame() 
+  names(output)<-c("A", "T", "C", "G" ,"U")
+  
+  output$A <- unlist(lapply(1:50, function(i){return(sum(substring(x,i,i)=='A'))}))
+  output$T <- unlist(lapply(1:50, function(i){return(sum(substring(x,i,i)=='T'))}))
+  output$C <- unlist(lapply(1:50, function(i){return(sum(substring(x,i,i)=='C'))}))
+  output$G <- unlist(lapply(1:50, function(i){return(sum(substring(x,i,i)=='G'))}))
+  output$U <- unlist(lapply(1:50, function(i){return(sum(substring(x,i,i)=='U'))}))
+  return(output)
+}
